@@ -48,7 +48,7 @@ export class PostResolver {
     return post;
   }
 
-  //Create Post
+  //Delete Post
   @Mutation(() => Boolean)
   async deletePost(
     @Arg("id", () => Int) id: number,
