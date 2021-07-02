@@ -1,0 +1,13 @@
+req.session.userId = user.id
+
+{userId: 1} -> send to redis
+
+sess: "Value" -> {userId: 1}
+
+express-session will set a cookie on the browser
+
+when user makes a request, the value in the cookie is sent to the server
+
+The cookies value is then decrpyt by our secret and gives us the key to our redis server
+
+makes a request to redis and redis will return the value paired with the key
