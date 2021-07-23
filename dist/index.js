@@ -12,47 +12,74 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const post_1 = require("./resolvers/post");
-require("reflect-metadata");
-const hello_1 = require("./resolvers/hello");
-const constants_1 = require("./constants");
-const core_1 = require("@mikro-orm/core");
-const express_1 = __importDefault(require("express"));
+const createUpdootLoader_1 = require("./utils/createUpdootLoader");
+const createUserLoader_1 = require("./utils/createUserLoader");
 const apollo_server_express_1 = require("apollo-server-express");
-const type_graphql_1 = require("type-graphql");
-const mikro_orm_config_1 = __importDefault(require("./mikro-orm.config"));
-const user_1 = require("./resolvers/user");
-const redis_1 = __importDefault(require("redis"));
-const express_session_1 = __importDefault(require("express-session"));
 const connect_redis_1 = __importDefault(require("connect-redis"));
+const cors_1 = __importDefault(require("cors"));
+const express_1 = __importDefault(require("express"));
+const express_session_1 = __importDefault(require("express-session"));
+const ioredis_1 = __importDefault(require("ioredis"));
+require("reflect-metadata");
+const type_graphql_1 = require("type-graphql");
+const typeorm_1 = require("typeorm");
+const constants_1 = require("./constants");
+const Post_1 = require("./entities/Post");
+const User_1 = require("./entities/User");
+const hello_1 = require("./resolvers/hello");
+const post_1 = require("./resolvers/post");
+const user_1 = require("./resolvers/user");
+const Updoot_1 = require("./entities/Updoot");
+require("dotenv-safe/config");
 const RedisStore = connect_redis_1.default(express_session_1.default);
-const redisClient = redis_1.default.createClient();
+const redis = new ioredis_1.default(process.env.REDIS_URL);
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
+    const conn = typeorm_1.createConnection({
+        type: "postgres",
+        url: process.env.DATABASE_URL,
+        logging: true,
+        synchronize: true,
+        migrations: [__dirname + "/migrations/*.js"],
+        entities: [Post_1.Post, User_1.User, Updoot_1.Updoot],
+    });
     const app = express_1.default();
+    console.log(process.env.CORS_ORIGIN);
+    app.use(cors_1.default({
+        origin: "*",
+        credentials: true,
+    }));
     app.use(express_session_1.default({
-        name: "qid",
-        store: new RedisStore({ client: redisClient, disableTouch: true }),
+        name: constants_1.COOKIE_NAME,
+        store: new RedisStore({ client: redis, disableTouch: true }),
         cookie: {
             maxAge: 1000 * 60 * 60 * 24 * 365 * 10,
             httpOnly: true,
             sameSite: "lax",
             secure: constants_1.__prod__,
+            domain: constants_1.__prod__ ? ".lsannicolas.com" : undefined,
         },
         saveUninitialized: false,
-        secret: "Rocks",
+        secret: process.env.SESSION_SECRET,
         resave: false,
     }));
-    const orm = yield core_1.MikroORM.init(mikro_orm_config_1.default);
-    orm.getMigrator().up();
     const apolloServer = new apollo_server_express_1.ApolloServer({
         schema: yield type_graphql_1.buildSchema({
             resolvers: [hello_1.HelloResolver, post_1.PostResolver, user_1.UserResolver],
             validate: false,
         }),
-        context: ({ req, res }) => ({ em: orm.em, req, res }),
+        context: ({ req, res }) => ({
+            req,
+            res,
+            redis,
+            userLoader: createUserLoader_1.createUserLoader(),
+            updootLoader: createUpdootLoader_1.createUpdootLoader(),
+        }),
     });
-    apolloServer.applyMiddleware({ app });
-    app.listen(5000, () => {
+    apolloServer.applyMiddleware({
+        app,
+        cors: false,
+    });
+    app.listen(process.env.PORT, () => {
         console.log("server started on localhost:5000");
     });
 });
