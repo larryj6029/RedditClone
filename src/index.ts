@@ -41,7 +41,7 @@ const main = async () => {
   console.log(process.env.CORS_ORIGIN);
   app.use(
     cors({
-      origin: "*",
+      origin: process.env.CORS_ORIGIN,
       credentials: true,
     })
   );

@@ -63,5 +63,8 @@
       "./src/mikro-orm.config.ts",
       "./dist/mikro-orm.config.js"
     ]
+  },
+  "engines": {
+    "node": ">=0.12"
   }
 }

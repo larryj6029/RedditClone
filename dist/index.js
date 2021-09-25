@@ -45,7 +45,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const app = express_1.default();
     console.log(process.env.CORS_ORIGIN);
     app.use(cors_1.default({
-        origin: "*",
+        origin: process.env.CORS_ORIGIN,
         credentials: true,
     }));
     app.use(express_session_1.default({
