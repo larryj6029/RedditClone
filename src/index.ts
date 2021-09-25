@@ -23,7 +23,7 @@ const RedisStore = connectRedis(session);
 const redis = new Redis(process.env.REDIS_URL);
 
 const main = async () => {
-  const conn = createConnection({
+  createConnection({
     type: "postgres",
     url: process.env.DATABASE_URL,
     logging: true,
