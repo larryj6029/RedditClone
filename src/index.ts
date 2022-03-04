@@ -5,7 +5,7 @@ import connectRedis from "connect-redis";
 import cors from "cors";
 import express from "express";
 import session from "express-session";
-import Redis from "ioredis";
+// import Redis from "ioredis";
 import "reflect-metadata";
 import { MyContext } from "./types";
 import { buildSchema } from "type-graphql";
@@ -19,10 +19,20 @@ import { UserResolver } from "./resolvers/user";
 import { Updoot } from "./entities/Updoot";
 import "dotenv-safe/config";
 
+var redis = require("redis");
 const RedisStore = connectRedis(session);
-const redis = new Redis(process.env.REDIS_URL);
+// const redis = new Redis(process.env.REDIS_URL);
+// Connect to the Azure Cache for Redis over the TLS port using the key.
 
 const main = async () => {
+  var cacheConnection = redis.createClient({
+    // rediss for TLS
+    url: "rediss://" + process.env.REDIS_URL + ":6380",
+    password: process.env.REDIS_PASSWORD,
+  });
+  await cacheConnection.connect();
+  console.log(await cacheConnection.ping());
+
   createConnection({
     type: "postgres",
     url: process.env.DATABASE_URL,

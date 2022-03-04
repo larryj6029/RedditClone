@@ -19,7 +19,6 @@ const connect_redis_1 = __importDefault(require("connect-redis"));
 const cors_1 = __importDefault(require("cors"));
 const express_1 = __importDefault(require("express"));
 const express_session_1 = __importDefault(require("express-session"));
-const ioredis_1 = __importDefault(require("ioredis"));
 require("reflect-metadata");
 const type_graphql_1 = require("type-graphql");
 const typeorm_1 = require("typeorm");
@@ -31,9 +30,15 @@ const post_1 = require("./resolvers/post");
 const user_1 = require("./resolvers/user");
 const Updoot_1 = require("./entities/Updoot");
 require("dotenv-safe/config");
+var redis = require("redis");
 const RedisStore = connect_redis_1.default(express_session_1.default);
-const redis = new ioredis_1.default(process.env.REDIS_URL);
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
+    var cacheConnection = redis.createClient({
+        url: "rediss://" + process.env.REDIS_URL + ":6380",
+        password: process.env.REDIS_PASSWORD,
+    });
+    yield cacheConnection.connect();
+    console.log(yield cacheConnection.ping());
     typeorm_1.createConnection({
         type: "postgres",
         url: process.env.DATABASE_URL,
